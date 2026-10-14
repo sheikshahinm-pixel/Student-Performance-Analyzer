@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>R Project – Student Performance Analyzer</title>
+<style>
+  :root{
+    --bg:#f5f6fa; --card:#ffffff; --ink:#1c2033; --muted:#6b7190; --line:#e3e6f0;
+    --accent:#4f46e5; --accent-soft:#eceafd;
+    --good:#16a34a; --warn:#f59e0b; --bad:#dc2626; --dist:#7c3aed;
+    --code-bg:#0f172a; --code-ink:#e2e8f0;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0f1220; --card:#181c30; --ink:#e8eaf6; --muted:#9aa0c3; --line:#2a2f4d; --accent:#818cf8; --accent-soft:#25285a; }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+  header{padding:28px 24px 0;max-width:1180px;margin:0 auto}
+  header h1{margin:0;font-size:1.65rem;letter-spacing:-.01em}
+  header p{margin:4px 0 0;color:var(--muted)}
+  .badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .badge{background:var(--accent-soft);color:var(--accent);padding:3px 11px;border-radius:99px;font-size:.78rem;font-weight:600}
+  nav{max-width:1180px;margin:18px auto 0;padding:0 24px;display:flex;gap:4px;border-bottom:1px solid var(--line)}
+  nav button{background:none;border:0;color:var(--muted);padding:10px 16px;font:inherit;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
+  nav button.on{color:var(--accent);border-bottom-color:var(--accent)}
+  main{max-width:1180px;margin:0 auto;padding:22px 24px 60px}
+  section.tab{display:none}
+  section.tab.on{display:block}
+  .controls{display:flex;align-items:center;gap:16px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin-bottom:18px}
+  .controls label{font-weight:600}
+  .controls input[type=range]{flex:1;min-width:160px;accent-color:var(--accent)}
+  .controls .val{font-variant-numeric:tabular-nums;font-weight:700;color:var(--accent);min-width:28px}
+  .controls small{color:var(--muted)}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:18px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .kpi .l{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+  .kpi .v{font-size:1.9rem;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums}
+  .kpi .s{font-size:.82rem;color:var(--muted)}
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;margin-bottom:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;min-width:0}
+  .card h3{margin:0 0 10px;font-size:.98rem}
+  .c8{grid-column:span 8}.c4{grid-column:span 4}.c6{grid-column:span 6}.c12{grid-column:span 12}
+  @media(max-width:860px){.c8,.c4,.c6{grid-column:span 12}}
+  svg{width:100%;height:auto;display:block}
+  svg text{fill:var(--muted);font-size:11px;font-family:inherit}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.8rem;color:var(--muted);margin-top:8px}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  .tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+  .tools input,.tools select{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 10px;font:inherit}
+  .tbl-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:.9rem}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{color:var(--muted);font-size:.76rem;text-transform:uppercase;letter-spacing:.05em;cursor:pointer;user-select:none}
+  td.num{font-variant-numeric:tabular-nums}
+  .pill{padding:2px 10px;border-radius:99px;font-size:.78rem;font-weight:700;color:#fff}
+  .p-Pass{background:var(--good)}.p-Distinction{background:var(--dist)}.p-Fail{background:var(--bad)}
+  .mark-low{color:var(--bad);font-weight:700}
+  pre.console,pre.code{background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:16px 18px;overflow:auto;font:13px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:0;max-height:560px}
+  .code .k{color:#c4b5fd}.code .s{color:#86efac}.code .c{color:#64748b;font-style:italic}.code .n{color:#fbbf24}.code .f{color:#7dd3fc}
+  .btn{background:var(--accent);color:#fff;border:0;padding:8px 16px;border-radius:8px;font:inherit;font-weight:600;cursor:pointer}
+  .btn.alt{background:var(--accent-soft);color:var(--accent)}
+  .row{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .concepts{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+  .concepts .card h3{color:var(--accent)}
+  .concepts code,.steps code{background:var(--accent-soft);color:var(--accent);padding:1px 6px;border-radius:5px;font-size:.85em}
+  .concepts ul{padding-left:18px;margin:8px 0 0}
+  .steps li{margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📊 Student Performance Analyzer</h1>
+  <p>An R mini project built on <b>conditional statements</b>, <b>loops</b> and <b>functions</b> — with a live dashboard.</p>
+  <div class="badges"><span class="badge">if / else if / else</span><span class="badge">for · while · repeat</span><span class="badge">next · break</span><span class="badge">user-defined functions</span></div>
+</header>
+
+<nav id="nav">
+  <button data-t="dash" class="on">Dashboard</button>
+  <button data-t="code">R Code</button>
+  <button data-t="concepts">Concepts Used</button>
+  <button data-t="run">How to Run</button>
+</nav>
+
+<main>
+
+<!-- ============ DASHBOARD ============ -->
+<section id="dash" class="tab on">
+  <div class="controls">
+    <label for="pm">Pass mark (per subject)</label>
+    <input type="range" id="pm" min="30" max="70" value="40">
+    <span class="val" id="pmv">40</span>
+    <small>Drag to change <code>pass_mark</code> — every grade, status and chart recalculates using the same logic as the R script.</small>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="grid">
+    <div class="card c8"><h3>Average marks per student</h3><div id="barchart"></div>
+      <div class="legend"><span><i style="background:var(--good)"></i>Pass</span><span><i style="background:var(--dist)"></i>Distinction (avg ≥ 85)</span><span><i style="background:var(--bad)"></i>Fail (any subject below pass mark)</span><span>— dashed line = pass mark</span></div></div>
+    <div class="card c4"><h3>Grade distribution</h3><div id="donut"></div><div class="legend" id="donutLegend"></div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card c6"><h3>Class average by subject</h3><div id="subjchart"></div></div>
+    <div class="card c6"><h3>Subject toppers <small style="color:var(--muted);font-weight:400">(for loop + which.max)</small></h3><div id="toppers"></div>
+      <h3 style="margin-top:16px">Scholarship list <small style="color:var(--muted);font-weight:400">(while loop, avg ≥ 90)</small></h3><div id="scholar"></div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card c12">
+      <h3>Student results</h3>
+      <div class="tools">
+        <input id="q" placeholder="Search name…">
+        <select id="fs"><option value="">All statuses</option><option>Distinction</option><option>Pass</option><option>Fail</option></select>
+      </div>
+      <div class="tbl-wrap"><table id="tbl"></table></div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card c12">
+      <h3>Console output <small style="color:var(--muted);font-weight:400">— what <code>Rscript student_analyzer.R</code> prints with the current pass mark</small></h3>
+      <pre class="console" id="console"></pre>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CODE ============ -->
+<section id="code" class="tab">
+  <div class="row">
+    <button class="btn" id="dl">⬇ Download student_analyzer.R</button>
+    <button class="btn alt" id="cp">Copy code</button>
+  </div>
+  <pre class="code" id="codeview"></pre>
+</section>
+
+<!-- ============ CONCEPTS ============ -->
+<section id="concepts" class="tab">
+  <div class="concepts">
+    <div class="card"><h3>1 · Conditional statements</h3>
+      <p>Decisions the program makes about data.</p>
+      <ul>
+        <li><code>get_grade()</code> – an <code>if / else if / else</code> ladder turns an average into A+ … F.</li>
+        <li><code>get_status()</code> – decides Fail, Pass or Distinction.</li>
+        <li><code>if (failed == 0) next</code> – skips students with nothing to review.</li>
+        <li><code>is.na(g)</code> check – chooses between "eligible" and "not eligible" messages.</li>
+      </ul></div>
+    <div class="card"><h3>2 · Loops</h3>
+      <p>Repeating work over many rows and values.</p>
+      <ul>
+        <li><code>for (i in 1:nrow(students))</code> – main loop that analyses every student.</li>
+        <li><code>for (m in marks)</code> inside <code>count_failed()</code> – counts failing subjects.</li>
+        <li><code>for (s in subjects)</code> – finds the topper in each subject.</li>
+        <li><code>while (k &lt;= nrow(ranked) &amp;&amp; …)</code> – walks the ranked list until averages drop below 90.</li>
+        <li><code>repeat { … break }</code> – adds grace marks one at a time until the pass mark is reached.</li>
+        <li><code>next</code> and <code>break</code> – loop-control keywords.</li>
+      </ul></div>
+    <div class="card"><h3>3 · Functions</h3>
+      <p>Reusable, named blocks with arguments and return values.</p>
+      <ul>
+        <li><code>get_grade(avg, pass)</code> – returns a grade string.</li>
+        <li><code>count_failed(marks, pass)</code> – returns a number.</li>
+        <li><code>get_status(avg, failed)</code> – combines two inputs into a decision.</li>
+        <li><code>grace_marks(mark, pass, max_grace)</code> – default argument, early <code>return(NA)</code>.</li>
+        <li><code>summarise_class(results)</code> – returns a named <code>list()</code>.</li>
+      </ul></div>
+    <div class="card c12" style="grid-column:1/-1"><h3>Ideas to extend the project</h3>
+      <ul>
+        <li>Read marks from a CSV with <code>read.csv()</code> instead of typing them in.</li>
+        <li>Add attendance and apply a rule: attendance &lt; 75% → "Detained".</li>
+        <li>Wrap the whole report in a function <code>run_report(pass_mark)</code> and call it with several pass marks inside a loop.</li>
+        <li>Draw charts in R with <code>barplot()</code> or <code>ggplot2</code>.</li>
+      </ul></div>
+  </div>
+</section>
+
+<!-- ============ RUN ============ -->
+<section id="run" class="tab">
+  <div class="card">
+    <h3>Run the project in R</h3>
+    <ol class="steps">
+      <li>Install R (and optionally RStudio) from <b>cran.r-project.org</b>.</li>
+      <li>Open the <b>R Code</b> tab and click <b>Download student_analyzer.R</b> (or copy the code into a new script in RStudio).</li>
+      <li>In RStudio press <b>Source</b>, or from a terminal run: <code>Rscript student_analyzer.R</code></li>
+      <li>Change <code>pass_mark</code> at the top of the script and run again — compare with the dashboard using the same value.</li>
+    </ol>
+    <p style="color:var(--muted)">Note: this dashboard re-implements the exact same logic in JavaScript so it can run live in a browser. The R script is the actual project; the dashboard is its visual front end.</p>
+  </div>
+</section>
+
+</main>
+
+<!-- ================= R SOURCE ================= -->
+<script type="text/plain" id="rsrc"># ==========================================================
+#  STUDENT PERFORMANCE ANALYZER  -  R mini project
+#  Concepts: conditions (if/else), loops (for/while/repeat),
+#            user-defined functions
+# ==========================================================
+
+pass_mark <- 40          # minimum marks needed in EACH subject
+
+# ---------- 1. DATA ----------
+students <- data.frame(
+  name    = c("Aarav","Bhavna","Chitra","Dev","Esha","Farhan",
+              "Gowri","Harish","Indu","Jayesh","Kavya","Lokesh"),
+  maths   = c(78, 92, 45, 66, 88, 35, 95, 58, 72, 81, 49, 90),
+  science = c(82, 95, 52, 70, 84, 42, 98, 61, 68, 77, 44, 86),
+  english = c(74, 88, 38, 72, 91, 50, 93, 55, 80, 69, 41, 92),
+  computer= c(91, 97, 60, 68, 79, 48, 99, 64, 75, 85, 52, 88),
+  social  = c(85, 90, 55, 74, 86, 39, 96, 59, 77, 73, 46, 94),
+  stringsAsFactors = FALSE
+)
+subjects <- c("maths", "science", "english", "computer", "social")
+
+# ---------- 2. FUNCTIONS ----------
+
+# Conditional ladder: average -> grade
+get_grade <- function(avg, pass = 40) {
+  if (avg >= 90) {
+    "A+"
+  } else if (avg >= 80) {
+    "A"
+  } else if (avg >= 70) {
+    "B"
+  } else if (avg >= 60) {
+    "C"
+  } else if (avg >= pass) {
+    "D"
+  } else {
+    "F"
+  }
+}
+
+# Loop inside a function: how many subjects are below pass mark?
+count_failed <- function(marks, pass = 40) {
+  failed <- 0
+  for (m in marks) {
+    if (m < pass) {
+      failed <- failed + 1
+    }
+  }
+  return(failed)
+}
+
+# Decision combining two inputs
+get_status <- function(avg, failed) {
+  if (failed > 0) {
+    "Fail"
+  } else if (avg >= 85) {
+    "Distinction"
+  } else {
+    "Pass"
+  }
+}
+
+# repeat loop: grace marks needed to lift one mark to the pass mark
+grace_marks <- function(mark, pass = 40, max_grace = 5) {
+  g <- 0
+  repeat {
+    if (mark >= pass) break              # reached the pass mark
+    if (g >= max_grace) return(NA)       # more than allowed grace
+    g <- g + 1
+    mark <- mark + 1
+  }
+  return(g)
+}
+
+# ---------- 3. MAIN LOOP : analyse every student ----------
+results <- data.frame()
+cat("--- STUDENT REPORT ---\n")
+
+for (i in 1:nrow(students)) {
+  marks  <- as.numeric(students[i, subjects])
+  total  <- sum(marks)
+  avg    <- round(mean(marks), 1)
+  failed <- count_failed(marks, pass_mark)
+  grade  <- get_grade(avg, pass_mark)
+  status <- get_status(avg, failed)
+
+  results <- rbind(results, data.frame(
+    name = students$name[i], total = total, average = avg,
+    grade = grade, failed = failed, status = status,
+    stringsAsFactors = FALSE))
+
+  cat(sprintf("%-8s total=%3d avg=%5.1f grade=%-2s status=%s\n",
+              students$name[i], total, avg, grade, status))
+}
+
+# ---------- 4. WHILE LOOP : scholarship list ----------
+cat("\n--- SCHOLARSHIP LIST (avg >= 90) ---\n")
+ranked <- results[order(-results$average), ]
+k <- 1
+while (k <= nrow(ranked) && ranked$average[k] >= 90) {
+  cat(sprintf("%d. %s (%.1f)\n", k, ranked$name[k], ranked$average[k]))
+  k <- k + 1
+}
+
+# ---------- 5. FOR LOOP : subject toppers ----------
+cat("\n--- SUBJECT TOPPERS ---\n")
+for (s in subjects) {
+  best <- which.max(students[[s]])
+  cat(sprintf("%-9s : %s (%d)\n", s, students$name[best], students[[s]][best]))
+}
+
+# ---------- 6. NEXT + REPEAT : grace-mark check ----------
+cat("\n--- GRACE MARK CHECK (max 5) ---\n")
+for (i in 1:nrow(students)) {
+  marks <- as.numeric(students[i, subjects])
+  if (count_failed(marks, pass_mark) == 0) next      # nothing to review
+  for (j in seq_along(subjects)) {
+    if (marks[j] < pass_mark) {
+      g <- grace_marks(marks[j], pass_mark)
+      if (is.na(g)) {
+        cat(sprintf("%s - %s: %d -> not eligible\n",
+                    students$name[i], subjects[j], marks[j]))
+      } else {
+        cat(sprintf("%s - %s: %d -> +%d grace mark(s)\n",
+                    students$name[i], subjects[j], marks[j], g))
+      }
+    }
+  }
+}
+
+# ---------- 7. SUMMARY FUNCTION ----------
+summarise_class <- function(res) {
+  list(
+    class_avg = round(mean(res$average), 1),
+    pass_rate = round(sum(res$status != "Fail") / nrow(res) * 100, 1),
+    topper    = res$name[which.max(res$average)]
+  )
+}
+
+sm <- summarise_class(results)
+cat("\n--- CLASS SUMMARY ---\n")
+cat(sprintf("Class average : %.1f\n", sm$class_avg))
+cat(sprintf("Pass rate     : %.1f%%\n", sm$pass_rate))
+cat(sprintf("Topper        : %s\n", sm$topper))
+</script>
+
+<script>
+/* ============ DATA (same as the R script) ============ */
+const SUBJECTS = ["maths","science","english","computer","social"];
+const NAMES   = ["Aarav","Bhavna","Chitra","Dev","Esha","Farhan","Gowri","Harish","Indu","Jayesh","Kavya","Lokesh"];
+const MARKS = {
+  maths:   [78,92,45,66,88,35,95,58,72,81,49,90],
+  science: [82,95,52,70,84,42,98,61,68,77,44,86],
+  english: [74,88,38,72,91,50,93,55,80,69,41,92],
+  computer:[91,97,60,68,79,48,99,64,75,85,52,88],
+  social:  [85,90,55,74,86,39,96,59,77,73,46,94]
+};
+
+/* ============ FUNCTIONS (mirror of the R functions) ============ */
+function getGrade(avg, pass){
+  if (avg >= 90) return "A+";
+  else if (avg >= 80) return "A";
+  else if (avg >= 70) return "B";
+  else if (avg >= 60) return "C";
+  else if (avg >= pass) return "D";
+  else return "F";
+}
+function countFailed(marks, pass){ let f=0; for (const m of marks){ if (m < pass) f++; } return f; }
+function getStatus(avg, failed){ if (failed>0) return "Fail"; else if (avg>=85) return "Distinction"; return "Pass"; }
+function graceMarks(mark, pass, max=5){
+  let g=0;
+  while(true){ if (mark>=pass) break; if (g>=max) return null; g++; mark++; }
+  return g;
+}
+
+/* ============ STATE ============ */
+let pass = 40, sortKey = "average", sortDir = -1;
+const GRADE_COL = {"A+":"#7c3aed","A":"#4f46e5","B":"#0ea5e9","C":"#16a34a","D":"#f59e0b","F":"#dc2626"};
+const STATUS_COL = {Pass:"var(--good)",Distinction:"var(--dist)",Fail:"var(--bad)"};
+const $ = id => document.getElementById(id);
+const pad = (s,n)=>String(s).padEnd(n), lpad=(s,n)=>String(s).padStart(n);
+
+function analyse(){
+  const rows=[];
+  for (let i=0;i<NAMES.length;i++){
+    const marks = SUBJECTS.map(s=>MARKS[s][i]);
+    const total = marks.reduce((a,b)=>a+b,0);
+    const avg = Math.round(total/marks.length*10)/10;
+    const failed = countFailed(marks, pass);
+    rows.push({i, name:NAMES[i], marks, total, average:avg, grade:getGrade(avg,pass), failed, status:getStatus(avg,failed)});
+  }
+  return rows;
+}
+
+/* ============ RENDER ============ */
+function render(){
+  const rows = analyse();
+  const n = rows.length;
+  const classAvg = Math.round(rows.reduce((a,r)=>a+r.average,0)/n*10)/10;
+  const passRate = Math.round(rows.filter(r=>r.status!=="Fail").length/n*1000)/10;
+  const top = rows.reduce((b,r)=> r.average>b.average? r : b, rows[0]);
+  const failCnt = rows.filter(r=>r.status==="Fail").length;
+  const distCnt = rows.filter(r=>r.status==="Distinction").length;
+
+  $("kpis").innerHTML = [
+    ["Students", n, "in the class"],
+    ["Class average", classAvg.toFixed(1), "mean of student averages"],
+    ["Pass rate", passRate.toFixed(1)+"%", (n-failCnt)+" of "+n+" students"],
+    ["Distinctions", distCnt, "average ≥ 85, no fails"],
+    ["Needs support", failCnt, "below "+pass+" in a subject"],
+    ["Topper", top.name, top.average.toFixed(1)+" average"]
+  ].map(k=>`<div class="kpi"><div class="l">${k[0]}</div><div class="v">${k[1]}</div><div class="s">${k[2]}</div></div>`).join("");
+
+  barChart(rows); donut(rows); subjChart(); toppers(); scholarship(rows); table(rows); consoleOut(rows, classAvg, passRate, top);
+}
+
+function barChart(rows){
+  const W=640,H=270,L=34,B=34,T=12,R=8, iw=W-L-R, ih=H-T-B, bw=iw/rows.length;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Average marks per student">`;
+  for(let v=0;v<=100;v+=25){ const y=T+ih-ih*v/100; s+=`<line x1="${L}" x2="${W-R}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="${L-6}" y="${y+4}" text-anchor="end">${v}</text>`; }
+  rows.forEach((r,k)=>{
+    const h=ih*r.average/100, x=L+k*bw+bw*.18, w=bw*.64, y=T+ih-h;
+    s+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="4" fill="${STATUS_COL[r.status]}"><title>${r.name}: ${r.average} (${r.grade}, ${r.status})</title></rect>`;
+    s+=`<text x="${x+w/2}" y="${y-4}" text-anchor="middle" style="font-size:10px">${r.average.toFixed(0)}</text>`;
+    s+=`<text x="${x+w/2}" y="${H-14}" text-anchor="middle">${r.name}</text>`;
+  });
+  const py=T+ih-ih*pass/100;
+  s+=`<line x1="${L}" x2="${W-R}" y1="${py}" y2="${py}" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6 4"/>`;
+  $("barchart").innerHTML=s+"</svg>";
+}
+
+function donut(rows){
+  const order=["A+","A","B","C","D","F"], counts=order.map(g=>rows.filter(r=>r.grade===g).length);
+  const R=62,C=2*Math.PI*R; let off=0;
+  let s=`<svg viewBox="0 0 200 200" role="img" aria-label="Grade distribution"><g transform="rotate(-90 100 100)">`;
+  counts.forEach((c,i)=>{ if(!c) return; const len=C*c/rows.length;
+    s+=`<circle cx="100" cy="100" r="${R}" fill="none" stroke="${GRADE_COL[order[i]]}" stroke-width="26" stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}"><title>${order[i]}: ${c}</title></circle>`; off+=len; });
+  s+=`</g><text x="100" y="100" text-anchor="middle" style="font-size:26px;font-weight:700;fill:var(--ink)">${rows.length}</text><text x="100" y="118" text-anchor="middle">students</text></svg>`;
+  $("donut").innerHTML=s;
+  $("donutLegend").innerHTML=order.map((g,i)=>`<span><i style="background:${GRADE_COL[g]}"></i>${g}: ${counts[i]}</span>`).join("");
+}
+
+function subjChart(){
+  const avgs=SUBJECTS.map(s=>MARKS[s].reduce((a,b)=>a+b,0)/NAMES.length);
+  const W=520,rowH=34,H=SUBJECTS.length*rowH+10,L=78;
+  let s=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Subject averages">`;
+  avgs.forEach((a,i)=>{ const y=i*rowH+6, w=(W-L-50)*a/100;
+    s+=`<text x="${L-8}" y="${y+16}" text-anchor="end">${SUBJECTS[i]}</text><rect x="${L}" y="${y}" width="${W-L-50}" height="22" rx="5" fill="var(--line)"/><rect x="${L}" y="${y}" width="${w}" height="22" rx="5" fill="var(--accent)"/><text x="${L+w+8}" y="${y+16}" style="fill:var(--ink);font-weight:600">${a.toFixed(1)}</text>`; });
+  $("subjchart").innerHTML=s+"</svg>";
+}
+
+function toppers(){
+  let h="";
+  for (const s of SUBJECTS){ let best=0; MARKS[s].forEach((m,i)=>{ if(m>MARKS[s][best]) best=i; });
+    h+=`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line)"><span style="color:var(--muted)">${s}</span><b>${NAMES[best]} · ${MARKS[s][best]}</b></div>`; }
+  $("toppers").innerHTML=h;
+}
+
+function scholarship(rows){
+  const ranked=[...rows].sort((a,b)=>b.average-a.average); let k=0, h="";
+  while(k<ranked.length && ranked[k].average>=90){ h+=`<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--line)"><span>${k+1}. ${ranked[k].name}</span><b>${ranked[k].average.toFixed(1)}</b></div>`; k++; }
+  $("scholar").innerHTML=h||"<span style='color:var(--muted)'>No student has an average of 90 or more.</span>";
+}
+
+function table(rows){
+  const q=$("q").value.trim().toLowerCase(), fs=$("fs").value;
+  let data=rows.filter(r=>(!q||r.name.toLowerCase().includes(q))&&(!fs||r.status===fs));
+  data.sort((a,b)=>{ const x=a[sortKey], y=b[sortKey]; return (x>y?1:x<y?-1:0)*sortDir; });
+  const cols=[["name","Name"],...SUBJECTS.map(s=>[s,s]),["total","Total"],["average","Average"],["grade","Grade"],["failed","Failed"],["status","Status"]];
+  let h="<thead><tr>"+cols.map(c=>`<th data-k="${c[0]}">${c[1]}${sortKey===c[0]?(sortDir>0?" ▲":" ▼"):""}</th>`).join("")+"</tr></thead><tbody>";
+  data.forEach(r=>{
+    h+=`<tr><td><b>${r.name}</b></td>`+r.marks.map(m=>`<td class="num ${m<pass?"mark-low":""}">${m}</td>`).join("")+
+       `<td class="num">${r.total}</td><td class="num">${r.average.toFixed(1)}</td><td><b>${r.grade}</b></td><td class="num">${r.failed}</td><td><span class="pill p-${r.status}">${r.status}</span></td></tr>`; });
+  if(!data.length) h+=`<tr><td colspan="${cols.length}" style="color:var(--muted)">No matching students.</td></tr>`;
+  $("tbl").innerHTML=h+"</tbody>";
+  $("tbl").querySelectorAll("th").forEach(th=>th.onclick=()=>{ const k=th.dataset.k; if(sortKey===k) sortDir*=-1; else {sortKey=k; sortDir=(k==="name"||k==="grade"||k==="status")?1:-1;} table(rows); });
+}
+
+function consoleOut(rows, classAvg, passRate, top){
+  const o=[];
+  o.push("--- STUDENT REPORT ---");
+  rows.forEach(r=>o.push(`${pad(r.name,8)} total=${lpad(r.total,3)} avg=${lpad(r.average.toFixed(1),5)} grade=${pad(r.grade,2)} status=${r.status}`));
+  o.push("","--- SCHOLARSHIP LIST (avg >= 90) ---");
+  const ranked=[...rows].sort((a,b)=>b.average-a.average); let k=0;
+  while(k<ranked.length && ranked[k].average>=90){ o.push(`${k+1}. ${ranked[k].name} (${ranked[k].average.toFixed(1)})`); k++; }
+  o.push("","--- SUBJECT TOPPERS ---");
+  for(const s of SUBJECTS){ let b=0; MARKS[s].forEach((m,i)=>{ if(m>MARKS[s][b]) b=i; }); o.push(`${pad(s,9)} : ${NAMES[b]} (${MARKS[s][b]})`); }
+  o.push("","--- GRACE MARK CHECK (max 5) ---");
+  rows.forEach(r=>{
+    if(r.failed===0) return;                       // next
+    r.marks.forEach((m,j)=>{ if(m<pass){ const g=graceMarks(m,pass);
+      o.push(g===null ? `${r.name} - ${SUBJECTS[j]}: ${m} -> not eligible` : `${r.name} - ${SUBJECTS[j]}: ${m} -> +${g} grace mark(s)`); } });
+  });
+  o.push("","--- CLASS SUMMARY ---",
+    `Class average : ${classAvg.toFixed(1)}`, `Pass rate     : ${passRate.toFixed(1)}%`, `Topper        : ${top.name}`);
+  $("console").textContent=o.join("\n");
+}
+
+/* ============ R CODE VIEW ============ */
+const SRC = $("rsrc").textContent.replace(/^\n/,"");
+(function(){
+  const esc = SRC.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const re=/(#.*)|("[^"\n]*")|\b(function|if|else|for|while|repeat|break|next|return|in|TRUE|FALSE|NA)\b|\b([A-Za-z_.][A-Za-z0-9_.]*)(?=\()|(\b\d+(?:\.\d+)?\b)/g;
+  $("codeview").innerHTML = esc.replace(re,(m,c,s,k,f,n)=> c?`<span class="c">${c}</span>`: s?`<span class="s">${s}</span>`: k?`<span class="k">${k}</span>`: f?`<span class="f">${f}</span>`: `<span class="n">${n}</span>`);
+})();
+$("dl").onclick=()=>{ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([SRC],{type:"text/plain"})); a.download="student_analyzer.R"; a.click(); URL.revokeObjectURL(a.href); };
+$("cp").onclick=async()=>{ try{ await navigator.clipboard.writeText(SRC); $("cp").textContent="Copied ✓"; }catch(e){ $("cp").textContent="Select & copy manually"; } setTimeout(()=>$("cp").textContent="Copy code",1800); };
+
+/* ============ EVENTS ============ */
+$("pm").oninput=e=>{ pass=+e.target.value; $("pmv").textContent=pass; render(); };
+$("q").oninput=$("fs").onchange=()=>table(analyse());
+document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll("#nav button").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll("section.tab").forEach(s=>s.classList.toggle("on",s.id===b.dataset.t));
+});
+render();
+</script>
+</body>
+</html>
